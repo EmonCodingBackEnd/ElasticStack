@@ -458,7 +458,7 @@ response:
 
 分词是指将文本转换成一系列单词（term or token）的过程，也可以叫做文本分析，在es里面称为Analysis，如下图所示：
 
-
+![Analysis](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920080909.png)
 
 - 分词器是es中专门处理分词的组件，英文为Analyzer，它的组成如下：
   - Character Filters
@@ -468,6 +468,8 @@ response:
   - Token Filter
     - 针对tokenizer处理的单词进行再加工，比如转小写、删除或者新增等处理
 - 分词器-调用顺序
+
+![分词器-调用顺序](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920081512.png)
 
 
 
