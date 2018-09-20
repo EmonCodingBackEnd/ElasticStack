@@ -454,7 +454,19 @@ response:
 
 ![字段的倒排索引](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920080351.png)
 
+## 3、分词
 
+分词是指将文本转换成一系列单词（term or token）的过程，也可以叫做文本分析，在es里面称为Analysis，如下图所示：
+
+
+
+- 分词器是es中专门处理分词的组件，英文为Analyzer，它的组成如下：
+  - Character Filters
+    - 针对原始文本进行处理，比如去除html特殊标记符
+  - Tokenizer
+    - 将原始文本按照一定规则切分为单词
+  - Token Filter
+    - 针对tokenizer处理的单词进行再加工，比如转小写、删除或者新增等处理
 
 # 三、Mapping设置
 
