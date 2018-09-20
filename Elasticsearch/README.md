@@ -448,6 +448,8 @@ response:
 | 1     | 1    | 2        | <18,22> |
 | 3     | 1    | 0        | <0,4>   |
 
+![倒排索引](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920075712.png)
+
 
 
 # 三、Mapping设置
