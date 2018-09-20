@@ -452,6 +452,8 @@ response:
 
 - es存储的是一个json格式的文档，其中包含多个字段，每个字段会有自己的倒排索引，类似下图：
 
+![字段的倒排索引](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920080351.png)
+
 
 
 # 三、Mapping设置
