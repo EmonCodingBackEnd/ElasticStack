@@ -471,6 +471,103 @@ response:
 
 ![分词器-调用顺序](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180920081512.png)
 
+## 4、Analyze API
+
+- es提供了一个测试分词的api接口，方便验证分词效果，endpoint是_analyze
+  - 可以直接指定analyzer进行测试
+  - 可以直接指定索引中的字段进行测试
+  - 可以自定义分词器进行测试
+- 直接指定analyzer进行测试，接口如下：
+
+```
+request:
+POST _analyze
+{
+    "analyzer": "standard",
+    "text": "hello world!"
+}
+response:
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "world",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
+```
+
+- 直接指定索引中的字段（使用字段指定的分词器）进行测试，接口如下：
+
+```
+request:
+POST test_index/_analyze
+{
+    "field": "username",
+    "text": "hello world!"
+}
+response:
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "world",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
+```
+
+- 自定义分词器进行测试，接口如下：
+
+```
+request:
+POST _analyze
+{
+    "tokenizer": "standard",
+    "filter": ["lowercase"],
+    "text": "Hello World!"
+}
+response:
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "world",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
+```
+
 
 
 # 三、Mapping设置
