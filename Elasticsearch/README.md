@@ -589,7 +589,9 @@ response:
     - 按词切分，支持多语言
     - 小写处理
 
-![Standard Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922075255.png)
+![Standard Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075255.png)
+
+
 
 ### 5.2、Simple Analyzer
 
@@ -598,7 +600,7 @@ response:
     - 按照非字母切分
     - 小写处理
 
-![Simple Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922075746.png)
+![Simple Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075746.png)
 
 ###  5.3、Whitespace Analyzer
 
@@ -606,7 +608,7 @@ response:
   - 其组成如图，特性为：
     - 按照空格切分
 
-![Whitespace Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922080108.png)
+![Whitespace Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080108.png)
 
 ### 5.4、Stop Analyzer
 
@@ -615,7 +617,7 @@ response:
   - 其组成如图，特性为：
     - 相比Simple Analyzer多了Stop Word处理
 
-![Stop Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922080551.png)
+![Stop Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080551.png)
 
 
 
