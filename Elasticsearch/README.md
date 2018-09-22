@@ -477,7 +477,9 @@ response:
   - 可以直接指定analyzer进行测试
   - 可以直接指定索引中的字段进行测试
   - 可以自定义分词器进行测试
-- 直接指定analyzer进行测试，接口如下：
+
+
+### 4.1、直接指定analyzer进行测试
 
 ```
 request:
@@ -507,7 +509,7 @@ response:
 }
 ```
 
-- 直接指定索引中的字段（使用字段指定的分词器）进行测试，接口如下：
+### 4.2、直接指定索引中的字段（使用字段指定的分词器）进行测试
 
 ```
 request:
@@ -537,7 +539,7 @@ response:
 }
 ```
 
-- 自定义分词器进行测试，接口如下：
+### 4.3、自定义分词器进行测试
 
 ```
 request:
@@ -567,6 +569,61 @@ response:
   ]
 }
 ```
+
+## 5、预定义的分词器
+
+- es自带如下的分词器
+  - Standard
+  - Simple
+  - Whitespace
+  - Stop
+  - Keyword
+  - Pattern
+  - Language
+
+### 5.1、Standard Analyzer
+
+- Standard Analyzer
+  - 默认分词器
+  - 其组成如图，特性为：
+    - 按词切分，支持多语言
+    - 小写处理
+
+![Standard Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922075255.png)
+
+### 5.2、Simple Analyzer
+
+- Simple Analyzer
+  - 其组成如图，特性为：
+    - 按照非字母切分
+    - 小写处理
+
+![Simple Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922075746.png)
+
+###  5.3、Whitespace Analyzer
+
+- Whitespace Analyzer
+  - 其组成如图，特性为：
+    - 按照空格切分
+
+![Whitespace Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922080108.png)
+
+### 5.4、Stop Analyzer
+
+- Stop Analyzer
+  - Stop Word指语气助词等修饰性的词语，比如the、an、的、这等等
+  - 其组成如图，特性为：
+    - 相比Simple Analyzer多了Stop Word处理
+
+![Stop Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/tree/master/Elasticsearch/src/main/resources/images/20180922080551.png)
+
+
+
+### 5.5、Keyword Analyzer
+
+### 5.6、Pattern Analyzer
+
+### 5.7、Language Analyzer
 
 
 
