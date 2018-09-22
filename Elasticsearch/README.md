@@ -572,6 +572,8 @@ response:
 
 ## 5、预定义的分词器
 
+测试语句：`The 2 QUICK Brown-Foxes jumped over the lazy dog's bone`
+
 ### 5.1、standard
 
 - Standard Analyzer
