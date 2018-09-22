@@ -596,7 +596,9 @@ PUT test_index
 }
 ```
 
-- 示例
+### 1、简单示例
+
+- 定义
 
 ```
 PUT test_index
@@ -621,7 +623,73 @@ PUT test_index
 }
 ```
 
+- 验证
 
+```
+POST test_index/_analyze
+{
+    "analyzer": "my_custom_analyzer",
+    "text": "Is this <b>a box</b>?"
+}
+```
+
+### 2、复杂示例
+
+- 定义
+
+```
+PUT test_index2
+{
+	"settings": {
+        "analysis": {
+            "analyzer": {
+                "my_custom_analyzer": {
+                    "type": "custom",
+                    "char_filter": [
+                    	"emoticons"
+                    ],
+                    "tokenizer": "punctuation",
+                    "filter": [
+                        "lowercase",
+                        "english_stop"
+                    ]
+                }
+            },
+            "tokenizer": {
+                "punctuation": {
+                    "type": "pattern",
+                    "pattern": "[.,!?]"
+                }
+            },
+            "char_filter": {
+                "emoticons": {
+                    "type": "mapping",
+                    "mappings": [
+                        ":) => _happy_",
+                        ": => _sad_"
+                    ]
+                }
+            },
+            "filter": {
+                "english_stop": {
+                    "type": "stop",
+                    "stopwords": "_english_"
+                }
+            }
+        }
+	}
+}
+```
+
+- 验证
+
+```
+POST test_index2/_analyze
+{
+    "analyzer": "my_custom_analyzer",
+    "text": "I'm a :) person, and you?"
+}
+```
 
 
 
