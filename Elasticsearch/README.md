@@ -4,7 +4,7 @@
 
 # 一、Elasticsearch入门
 
-## 0、常见术语
+## 1、常见术语
 
 - 文档 Document
   - 用户存储在es中的数据文档
@@ -17,7 +17,7 @@
 - 集群
   - 由一个或多个节点组成，对外提供服务
 
-## 1、Document
+## 2、Document
 
 - Json Object，由字段（Field）组成，常见数据类型如下：
   - 字符串：text，keyword
@@ -38,7 +38,7 @@
   - _source：文档的原始Json数据，可以从这里获取每个字段的内容
   - _all：整合所有字段内容到该字段，默认禁用，不推荐使用
 
-## 2、Index
+## 3、Index
 
 - 索引中存储具有相同机构的文档（Document）
   - 每个索引都有自己的`mapping`定义，用于定义字段名和类型
@@ -48,7 +48,7 @@
     - nginx-log-2017-01-02
     - nginx-log-2017-01-03
 
-## 3、Rest API
+## 4、Rest API
 
 - Elasticsearch集群对外提供RESTful API
   - REST - REpresentational State Transfer
@@ -62,95 +62,49 @@
   - Curl命令行
   - Kibana DevTools
 
-## 4、索引API
+## 5、索引API
 
-### 4.1、创建索引api如下：
+### 5.1、创建索引api如下：
 
 ```
-request:
 PUT /test_index
-response:
-{
-  "acknowledged": true,
-  "shards_acknowledged": true,
-  "index": "test_index"
-}
 ```
 
-### 4.2、查看现有索引
+### 5.2、查看现有索引
 
 ```
 GET _cat/indices
 ```
 
-### 4.3、删除索引
+### 5.3、删除索引
 
 ```
-request:
 DELETE /test_index
-response:
-{
-  "acknowledged": true
-}
 ```
 
-## 5、文档 Document API
+## 6、文档 Document API
 
-### 5.1、创建文档
+### 6.1、创建文档
 
 **创建文档时，如果索引不存在，es会自动创建对应的index和type。**
 
 - 指定id创建文档
 
 ```
-request:
 PUT /test_index/doc/1
 {
     "username": "alfred",
     "age": 1
-}
-
-response:
-{
-  "_index": "test_index",
-  "_type": "doc",
-  "_id": "1",
-  "_version": 1,
-  "result": "created",
-  "_shards": {
-    "total": 2,
-    "successful": 1,
-    "failed": 0
-  },
-  "_seq_no": 0,
-  "_primary_term": 1
 }
 ```
 
 - 不指定id创建文档
 
 ```
-request:
 POST /test_index/doc
 {
     "username": "tom",
     "age": 20
-}
-
-response:
-{
-  "_index": "test_index",
-  "_type": "doc",
-  "_id": "FQQL8mUBmW-jRNGpqlAB",
-  "_version": 1,
-  "result": "created",
-  "_shards": {
-    "total": 2,
-    "successful": 1,
-    "failed": 0
-  },
-  "_seq_no": 0,
-  "_primary_term": 1
 }
 ```
 
@@ -158,70 +112,12 @@ response:
   - endpoint为`_bulk`，如下：
 
 ```
-request:
 POST _bulk
 {"index":{"_index":"test_index","_type":"doc","_id":"3"}}
 {"username":"alfred","age":10}
 {"delete":{"_index":"test_index","_type":"doc","_id":"1"}}
 {"update":{"_id":"2","_index":"test_index","_type":"doc"}}
 {"doc":{"age":"20"}}
-
-response:
-{
-  "took": 74,
-  "errors": true,
-  "items": [
-    {
-      "index": {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "3",
-        "_version": 1,
-        "result": "created",
-        "_shards": {
-          "total": 2,
-          "successful": 1,
-          "failed": 0
-        },
-        "_seq_no": 0,
-        "_primary_term": 1,
-        "status": 201
-      }
-    },
-    {
-      "delete": {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "1",
-        "_version": 2,
-        "result": "deleted",
-        "_shards": {
-          "total": 2,
-          "successful": 1,
-          "failed": 0
-        },
-        "_seq_no": 1,
-        "_primary_term": 1,
-        "status": 200
-      }
-    },
-    {
-      "update": {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "2",
-        "status": 404,
-        "error": {
-          "type": "document_missing_exception",
-          "reason": "[doc][2]: document missing",
-          "index_uuid": "wky5ufb3S5aDjom5I8HUtA",
-          "shard": "2",
-          "index": "test_index"
-        }
-      }
-    }
-  ]
-}
 ```
 
 说明："index"、"delete"、"update"等属于action_type，具体有如下几种：
@@ -232,80 +128,23 @@ response:
   - create 创建，如果已有则报错
   - delete 删除
 
-### 5.2、查询文档
+### 6.2、查询文档
 
-- 指定要查询的文档id
+- 查询指定id的文档
 
 ```
-request:
 GET /test_index/doc/1
-成功的应答：
-{
-  "_index": "test_index",
-  "_type": "doc",
-  "_id": "1",
-  "_version": 1,
-  "found": true,
-  "_source": {
-    "username": "alfred",
-    "age": 1
-  }
-}
-失败的应答：
-{
-  "_index": "test_index",
-  "_type": "doc",
-  "_id": "2",
-  "found": false
-}
 ```
 
 - 查询所有文档，用到`_search`，如下：
 
 ```
-request:
 GET /test_index/doc/_search
-response:
-{
-  "took": 101,
-  "timed_out": false,
-  "_shards": {
-    "total": 5,
-    "successful": 5,
-    "skipped": 0,
-    "failed": 0
-  },
-  "hits": {
-    "total": 2,
-    "max_score": 1,
-    "hits": [
-      {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "FQQL8mUBmW-jRNGpqlAB",
-        "_score": 1,
-        "_source": {
-          "username": "tom",
-          "age": 20
-        }
-      },
-      {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "1",
-        "_score": 1,
-        "_source": {
-          "username": "alfred",
-          "age": 1
-        }
-      }
-    ]
-  }
-}
 ```
 
+- 查询所有文档，用到`_search`，可以指定查询条件，如下：
+
 ```
-request:
 GET /test_index/doc/_search
 {
     "query": {
@@ -313,33 +152,6 @@ GET /test_index/doc/_search
         	"_id": "1"
         }
     }
-}
-response:
-{
-  "took": 19,
-  "timed_out": false,
-  "_shards": {
-    "total": 5,
-    "successful": 5,
-    "skipped": 0,
-    "failed": 0
-  },
-  "hits": {
-    "total": 1,
-    "max_score": 1,
-    "hits": [
-      {
-        "_index": "test_index",
-        "_type": "doc",
-        "_id": "1",
-        "_score": 1,
-        "_source": {
-          "username": "alfred",
-          "age": 1
-        }
-      }
-    ]
-  }
 }
 ```
 
@@ -362,28 +174,6 @@ GET /_mget
         }
     ]
 }
-response:
-{
-  "docs": [
-    {
-      "_index": "test_index",
-      "_type": "doc",
-      "_id": "1",
-      "found": false
-    },
-    {
-      "_index": "test_index",
-      "_type": "doc",
-      "_id": "3",
-      "_version": 1,
-      "found": true,
-      "_source": {
-        "username": "alfred",
-        "age": 10
-      }
-    }
-  ]
-}
 ```
 
 # 二、倒排索引与分词
@@ -398,8 +188,6 @@ response:
 | 1      | Elasticsearch是最流行的搜索引擎 |
 | 2      | php是世界上最好的语言           |
 | 3      | 搜索引擎是如何诞生的            |
-
-
 
 - 倒排索引
   - 单词到文档id的关联关系
@@ -482,91 +270,31 @@ response:
 ### 4.1、直接指定analyzer进行测试
 
 ```
-request:
 POST _analyze
 {
     "analyzer": "standard",
     "text": "hello world!"
 }
-response:
-{
-  "tokens": [
-    {
-      "token": "hello",
-      "start_offset": 0,
-      "end_offset": 5,
-      "type": "<ALPHANUM>",
-      "position": 0
-    },
-    {
-      "token": "world",
-      "start_offset": 6,
-      "end_offset": 11,
-      "type": "<ALPHANUM>",
-      "position": 1
-    }
-  ]
-}
 ```
 
-### 4.2、直接指定索引中的字段（使用字段指定的分词器）进行测试
+### 4.2、直接指定索引中的字段（使用字段的分词器）进行测试
 
 ```
-request:
 POST test_index/_analyze
 {
     "field": "username",
     "text": "hello world!"
-}
-response:
-{
-  "tokens": [
-    {
-      "token": "hello",
-      "start_offset": 0,
-      "end_offset": 5,
-      "type": "<ALPHANUM>",
-      "position": 0
-    },
-    {
-      "token": "world",
-      "start_offset": 6,
-      "end_offset": 11,
-      "type": "<ALPHANUM>",
-      "position": 1
-    }
-  ]
 }
 ```
 
 ### 4.3、自定义分词器进行测试
 
 ```
-request:
 POST _analyze
 {
     "tokenizer": "standard",
     "filter": ["lowercase"],
     "text": "Hello World!"
-}
-response:
-{
-  "tokens": [
-    {
-      "token": "hello",
-      "start_offset": 0,
-      "end_offset": 5,
-      "type": "<ALPHANUM>",
-      "position": 0
-    },
-    {
-      "token": "world",
-      "start_offset": 6,
-      "end_offset": 11,
-      "type": "<ALPHANUM>",
-      "position": 1
-    }
-  ]
 }
 ```
 
@@ -574,60 +302,108 @@ response:
 
 测试语句：`The 2 QUICK Brown-Foxes jumped over the lazy dog's bone.`
 
-### 5.1、standard
+### 5.1、Standard Analyzer
 
-- Standard Analyzer
+- `standard`
   - 默认分词器
   - 其组成如图，特性为：
     - 按词切分，支持多语言
     - 小写处理
 
+```
+POST _analyze
+{
+  "analyzer": "standard",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Standard Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075255.png)
 
-### 5.2、simple
+### 5.2、Simple Analyzer
 
-- Simple Analyzer
+- `simple`
   - 其组成如图，特性为：
     - 按照非字母切分
     - 小写处理
 
+```
+POST _analyze
+{
+  "analyzer": "simple",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Simple Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075746.png)
 
-###  5.3、whitespace
+###  5.3、Whitespace Analyzer
 
-- Whitespace Analyzer
+- `whitespace`
   - 其组成如图，特性为：
     - 按照空格切分
 
+```
+POST _analyze
+{
+  "analyzer": "whitespace",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Whitespace Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080108.png)
 
-### 5.4、stop
+### 5.4、Stop Analyzer
 
-- Stop Analyzer
+- `stop`
   - Stop Word指语气助词等修饰性的词语，比如the、an、的、这等等
   - 其组成如图，特性为：
     - 相比Simple Analyzer多了Stop Word处理
 
+```
+POST _analyze
+{
+  "analyzer": "stop",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Stop Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080551.png)
 
-### 5.5、keyword
+### 5.5、Keyword Analyzer
 
-- Keyword Analyzer
+- `keyword`
   - 其组成如图，特性为：
     - 不分词，直接将输入作为一个单词输出
 
+```
+POST _analyze
+{
+  "analyzer": "keyword",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Keyword Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922081232.png)
 
-### 5.6、pattern
+### 5.6、Pattern Analyzer
 
-- Pattern Analyzer
+- `pattern`
   - 其组成如图，特性为：
     - 通过正则表达式自定义分隔符
       - 默认是`\W+`，即非字词的符号作为分隔符
 
+```
+POST _analyze
+{
+  "analyzer": "pattern",
+  "text": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone."
+}
+```
+
 ![Pattern Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922083029.png)
 
-### 5.7、language
+### 5.7、Language Analyzer
 
 - Language Analyzer
   - 提供了30+常见语言的分词器
@@ -820,11 +596,105 @@ PUT test_index
 }
 ```
 
+- 示例
+
+```
+PUT test_index
+{
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "my_custom_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "char_filter": [
+                        "html_strip"
+                    ],
+                    "filter": [
+                        "lowercase",
+                        "asciifolding"
+                    ]
+                }
+            }
+        }
+    }
+}
+```
+
 
 
 
 
 # 三、Mapping设置
+
+## 1、Mapping简介
+
+- 类似数据库中的表结构定义，主要作用如下：
+  - 定义Index下的字段名（Field Name）
+  - 定义字段的类型，比如数值型、字符串型、布尔型等
+  - 定义倒排索引相关的配置，比如是否索引、记录position等
+
+## 2、自定义Mapping
+
+- 自定义Mapping的api如下所示：
+
+```
+request:
+PUT my_index
+{
+    "mappings": {
+        "doc": {
+        	"properties": {
+                "title": {
+                    "type": "text"
+                },
+                "name": {
+                    "type": "keyword"
+                },
+                "age": {
+                    "type": "integer"
+                }
+        	}
+        }
+    }
+}
+```
+
+- Mapping中的字段类型一旦设定后，禁止直接修改，原因如下：
+  - Lucene实现的倒排索引生成后不允许修改
+- 重新建立新的索引，然后做reindex操作
+- 允许新增字段
+- 通过dynamic参数来控制字段的新增
+  - true （默认）允许自动新增字段
+  - false 不允许自动新增字段，但是文档可以正常写入，但无法对字段进行查询等操作
+  - strict 文档不能写入，报错
+
+```
+request:
+PUT my_idnex
+{
+    "mappings": {
+        "my_type": {
+            "dynamic": false,
+            "properties": {
+                "user": {
+                    "properties": {
+                        "name": {
+                            "type": "text"
+                        },
+                        "social_networks": {
+                            "dynamic": true,
+                            "properties": {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+
 
 # 四、Search API介绍
 
