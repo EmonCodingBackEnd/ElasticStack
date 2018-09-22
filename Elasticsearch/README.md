@@ -572,7 +572,7 @@ response:
 
 ## 5、预定义的分词器
 
-测试语句：`The 2 QUICK Brown-Foxes jumped over the lazy dog's bone`
+测试语句：`The 2 QUICK Brown-Foxes jumped over the lazy dog's bone.`
 
 ### 5.1、standard
 
@@ -621,12 +621,206 @@ response:
 ### 5.6、pattern
 
 - Pattern Analyzer
-  - 
+  - 其组成如图，特性为：
+    - 通过正则表达式自定义分隔符
+      - 默认是`\W+`，即非字词的符号作为分隔符
+
+![Pattern Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922083029.png)
 
 ### 5.7、language
 
 - Language Analyzer
-  - 
+  - 提供了30+常见语言的分词器
+  - `arabic`,`armenian`,`basque`,`bengali`,`brazilian`,`bulgarian`,`catalan`,`cjk`,`czech`,`danish`,`dutch`,`english`...
+
+## 6、中文分词
+
+- 难点
+  - 中文分词指的是将一个汉字序列切分成一个一个单独的词。在英文中，单词之间是以空格作为自然分界符，汉语中词没有一个形式上的分界符。
+  - 上下文不同，分词结果迥异，比如交叉歧义问题，比如下面两种分词都合理
+    - 乒乓球拍/卖/完了
+    - 乒乓球/拍卖/完了
+- 常用分词系统
+  - IK
+    - 实现中英文单词的切分，支持ik_smart、ik_maxword等模式
+    - 可自定义词库，支持热更新分词词典
+    - https://github.com/medcl/elasticsearch-analysis-ik
+  - jieba
+    - python中最流行的分词系统，支持分词和词性标注
+    - 支持繁体分词、自定义词典、并行分词等
+    - https://github.com/sing1ee/elasticsearch-jieba-plugin
+- 基于自然语言处理的分词系统
+  - Hanlp
+    - 由一系列模型与算法组成的Java工具包，目标是普及自然语言处理在生产环境中的应用
+    - https://github.com/hankcs/HanLP
+  - THULAC
+    - THU Lexical Analyzer for Chinese，由清华大学自然语言处理与社会人文计算实验室研制推出的一套中文词法分析工具包，具有中文分词和词性标注功能
+    - https://github.com/microbun/elasticsearch-thulac-plugin
+
+## 7、自定义分词
+
+- 当自带的分词无法满足需求时，可以自定义分词
+  - 通过自定义Character Filters、Tokenizer和Token Filter实现
+- Character Filters
+  - 在Tokenizer之前对原始文本进行处理，比如增加、删除或替换字符等
+  - 自带的如下：
+    - HTML Strip去除html标签和转换html实体
+    - Mapping进行字符替换操作
+    - Pattern Replace进行正则匹配替换
+  - 会影响后续tokenizer解析的postion和offset信息
+  - 测试举例：
+
+```
+request:
+POST _analyze
+{
+    "tokenizer": "keyword",
+    "char_filter": ["html_strip"],
+    "text": "<p>I&apos;m so <b>happy</b>!</p>"
+}
+response:
+{
+  "tokens": [
+    {
+      "token": """
+
+I'm so happy!
+
+""",
+      "start_offset": 0,
+      "end_offset": 32,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+```
+
+- Tokenizer
+  - 将原始文本按照一定规则切分为单词（term or token）
+  - 自带的如下：
+    - standard 按照单词进行分割
+    - letter 按照非字符类进行分割
+    - whitespace 按照空格进行分割
+    - UAX URL Email 按照standard分割，但不会分割邮箱和url
+    - NGram和Edge NGram连词分割
+    - Path Hierarchy 按照文件路径进行分割
+    - 测试举例：
+
+```
+request:
+POST _analyze
+{
+    "tokenizer": "path_hierarchy",
+    "text": "/one/two/three"
+}
+response:
+{
+  "tokens": [
+    {
+      "token": "/one",
+      "start_offset": 0,
+      "end_offset": 4,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "/one/two",
+      "start_offset": 0,
+      "end_offset": 8,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "/one/two/three",
+      "start_offset": 0,
+      "end_offset": 14,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+```
+
+- Token Filters
+  - 对于tokenizer输出的单词（term）进行增加、删除、修改等操作
+  - 自带的如下：
+    - lowercase 将所有term转换为小写
+    - stop 删除stop words
+    - NGram和Edge NGram连词分割
+    - Synonym 添加近义词的 term
+
+```
+request:
+POST _analyze
+{
+    "text": "a Hello,world!",
+    "tokenizer": "standard",
+    "filter": [
+        "stop",
+        "lowercase",
+        {
+            "type": "ngram",
+            "min_gram": 4,
+            "max_gram": 4
+        }
+    ]
+}
+response:
+{
+  "tokens": [
+    {
+      "token": "hell",
+      "start_offset": 2,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "ello",
+      "start_offset": 2,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "worl",
+      "start_offset": 8,
+      "end_offset": 13,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "orld",
+      "start_offset": 8,
+      "end_offset": 13,
+      "type": "<ALPHANUM>",
+      "position": 2
+    }
+  ]
+}
+```
+
+## 8、自定义分词的API
+
+- 自定义分词的API
+  - 自定义分词需要在索引的配置中设定，如下所示：
+
+```
+PUT test_index
+{
+    "settings": {
+    	"analysis": {
+            "char_filter": {},
+            "tokenizer": {},
+            "filter": {},
+            "analyzer": {}
+    	}
+    }
+}
+```
+
+
 
 
 
