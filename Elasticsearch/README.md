@@ -572,16 +572,7 @@ response:
 
 ## 5、预定义的分词器
 
-- es自带如下的分词器
-  - Standard
-  - Simple
-  - Whitespace
-  - Stop
-  - Keyword
-  - Pattern
-  - Language
-
-### 5.1、Standard Analyzer
+### 5.1、standard
 
 - Standard Analyzer
   - 默认分词器
@@ -591,9 +582,7 @@ response:
 
 ![Standard Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075255.png)
 
-
-
-### 5.2、Simple Analyzer
+### 5.2、simple
 
 - Simple Analyzer
   - 其组成如图，特性为：
@@ -602,7 +591,7 @@ response:
 
 ![Simple Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922075746.png)
 
-###  5.3、Whitespace Analyzer
+###  5.3、whitespace
 
 - Whitespace Analyzer
   - 其组成如图，特性为：
@@ -610,7 +599,7 @@ response:
 
 ![Whitespace Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080108.png)
 
-### 5.4、Stop Analyzer
+### 5.4、stop
 
 - Stop Analyzer
   - Stop Word指语气助词等修饰性的词语，比如the、an、的、这等等
@@ -619,13 +608,23 @@ response:
 
 ![Stop Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922080551.png)
 
+### 5.5、keyword
 
+- Keyword Analyzer
+  - 其组成如图，特性为：
+    - 不分词，直接将输入作为一个单词输出
 
-### 5.5、Keyword Analyzer
+![Keyword Analyzer](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180922081232.png)
 
-### 5.6、Pattern Analyzer
+### 5.6、pattern
 
-### 5.7、Language Analyzer
+- Pattern Analyzer
+  - 
+
+### 5.7、language
+
+- Language Analyzer
+  - 
 
 
 
