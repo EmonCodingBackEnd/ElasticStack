@@ -771,12 +771,17 @@ POST test_index2/_analyze
   - 定义字段的类型，比如数值型、字符串型、布尔型等
   - 定义倒排索引相关的配置，比如是否索引、记录position等
 
+查询Mapping：
+
+```
+GET /test_index/_mapping
+```
+
 ## 2、自定义Mapping
 
 - 自定义Mapping的api如下所示：
 
 ```
-request:
 PUT my_index
 {
     "mappings": {
@@ -807,8 +812,7 @@ PUT my_index
   - strict 文档不能写入，报错
 
 ```
-request:
-PUT my_idnex
+PUT my_index
 {
     "mappings": {
         "my_type": {
