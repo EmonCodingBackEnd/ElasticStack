@@ -691,7 +691,12 @@ POST test_index2/_analyze
 }
 ```
 
+## 9、分词使用说明
 
+- 分词会在如下两个时机使用：
+  - 创建或更新文档时（Index Time），会对相应的文档进行分词处理
+  - 查询时（Search Time），会对查询语句进行分词
+- 
 
 # 三、Mapping设置
 
