@@ -596,7 +596,7 @@ PUT test_index
 }
 ```
 
-### 1、简单示例
+### 8.1、简单示例
 
 - 定义
 
@@ -633,7 +633,7 @@ POST test_index/_analyze
 }
 ```
 
-### 2、复杂示例
+### 8.2、复杂示例
 
 - 定义
 
@@ -694,9 +694,73 @@ POST test_index2/_analyze
 ## 9、分词使用说明
 
 - 分词会在如下两个时机使用：
+
   - 创建或更新文档时（Index Time），会对相应的文档进行分词处理
   - 查询时（Search Time），会对查询语句进行分词
-- 
+
+- 索引时分词是通过配置Index Mapping中每个字段的analyzer属性实现的，如下：
+
+  - 不指定分词时，使用默认standard
+
+  ```
+  PUT test_index
+  {
+      "mappings": {
+          "doc": {
+              "properties": {
+                  "title": {
+                      "type": "text",
+                      "analyzer": "whitespace"
+                  }
+              }
+          }
+      }
+  }
+  ```
+
+- 查询时分词的指定方式有如下的几种：
+
+  - 查询的时候通过analyzer指定分词器
+
+  ```
+  POST test_index/_search
+  {
+      "query": {
+          "match": {
+              "message": {
+                  "query": "hello",
+                  "analyzer": "standard"
+              }
+          }
+      }
+  }
+  ```
+
+  - 通过index mapping设置search_analyzer实现
+
+  ```
+  PUT test_index
+  {
+      "mappings": {
+          "doc": {
+              "properties": {
+                  "title": {
+                      "type": "text",
+                      "analyzer": "whitespace",
+                      "search_analyzer": "standard"
+                  }
+              }
+          }
+      }
+  }
+  ```
+
+**一般不需要特别指定查询时分词器，直接使用索引时分词器即可，否则会出现无法匹配的情况。**
+
+- 分词的使用建议
+  - 明确字段是否需要分词，不需要分词的字段就将type设置为keyword，可以节省空间和提高性能
+  - 善用`_analyze API`，查看文档的具体分词结果
+  - 动手测试
 
 # 三、Mapping设置
 
