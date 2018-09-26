@@ -1468,7 +1468,7 @@ GET test_search_index/_search?q=job:"java engineer"~1
 - 字段类查询主要包括以下两类：
 
   - 全文匹配
-    - 针对text类型的字段进行全文检索，会对查询语句进行分词处理，如match，match_phrase等query类型
+    - 针对text类型的字段进行全文检索，会对查询语句进行**分词**处理，如match，match_phrase等query类型
   - 单词匹配
     - 不会对查询语句做分词处理，直接去匹配字段的倒排索引，如term，terms，range等query类型
 
@@ -1518,6 +1518,255 @@ GET test_search_index/_search?q=job:"java engineer"~1
                   "query": "alfred way",
                   "minimum_should_match": "2"
               }
+          }
+      }
+  }
+  ```
+
+- Match Phrase Query
+
+  - 对字段作检索，有顺序要求，API示例如下
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "match_phrase": {
+              "job": "java engineer"
+          }
+      }
+  }
+  ```
+
+  - 通过slop参数可以控制单词间的间隔
+
+  ```
+  
+  GET test_search_index/_search
+  {
+      "query": {
+          "match_phrase": {
+              "job": {
+                  "query": "java engineer",
+                  "slop": "1"
+              }
+          }
+      }
+  }
+  ```
+
+- Query String Query
+
+  - 类似于URI Search中的q参数查询
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "query_string": {
+              "default_field": "username",
+              "query": "alfred AND way"
+          }
+      }
+  }
+  ```
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "query_string": {
+              "fields": ["username", "job"],
+              "query": "alfred OR (java AND ruby)"
+          }
+      }
+  }
+  ```
+
+- Simple Query String Query
+  - 类似Query String，但是会忽略错误的查询语法，并且仅支持部分查询方法
+  - 其常用的逻辑符号如下，不能使用AND、OR、NOT等关键词
+  - `+` 代指 AND
+  - `|` 代指OR
+  - `-` 代指NOT
+
+```
+GET test_search_index/_search
+{
+    "query": {
+        "simple_query_string": {
+            "query": "alfred +way",
+            "fields": ["username"]
+        }
+    }
+}
+```
+
+- Term Query
+  - 将查询语句作为整个单词进行查询，即不对查询语句做分词处理，如下所示：
+
+```
+GET test_search_index/_search
+{
+    "query": {
+        "term": {
+            "username": "alfred"
+        }
+    }
+}
+```
+
+```
+GET test_search_index/_search
+{
+    "query": {
+        "terms": {
+            "username": [
+                "alfred",
+                "way"
+            ]
+        }
+    }
+}
+```
+
+- Range Query
+
+  - 范围查询主要针对数值和日期类型，如下所示：
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "range": {
+              "age": {
+                  "gte": 10,
+                  "lte": 20
+              }
+          }
+      }
+  }
+  ```
+
+  - 针对日期做查询，如下所示：
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "range": {
+              "birth": {
+                  "gte": "1990-01-01"
+              }
+          }
+      }
+  }
+  ```
+
+  - 针对日期提供的一种更友好地计算方式，格式如下：
+
+    - 单位主要有如下几种：
+
+      - `y` years
+      - `M` months
+      - `w` weeks
+      - `d` days
+      - `h` hours
+      - `m` minutes
+      - `s` seconds
+
+    - 假设now为2018-01-02 12:00:00，那么如下的计算结果实际为：
+
+      | 计算公式            | 实际结果            |
+      | ------------------- | ------------------- |
+      | now + 1h            | 2018-01-02 13:00:00 |
+      | now - 1h            | 2018-01-02 11:00:00 |
+      | now -1h/d           | 2018-01-02 00:00:00 |
+      | 2016-01-01\|\|+1M/d | 2016-02-01 00:00:00 |
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "range": {
+              "birth": {
+                  "gte": "now-20y"
+              }
+          }
+      }
+  }
+  ```
+
+### 复合查询
+
+- 复合查询是指包含字段类查询或复合查询的类型，主要包括以下几类：
+
+  - `constant_score` query
+  - `bool` query
+  - `dis_max` query
+  - `function_score` query
+  - `boosting` query
+
+- Constant Score Query
+
+  - 该查询将其内部的查询结果文档得分都设定为1或boost的值
+    - 多用于结合bool查询实现自定义得分
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "constant_score": {
+              "filter": {
+                  "match": {
+                      "username": "alfred"
+                  }
+              }
+          }
+      }
+  }
+  ```
+
+
+### 相关性算分
+
+- 相关性算分是指文档与查询语句间的相关度，英文为relevance
+
+  - 通过倒排索引可以获取与查询语句相匹配的文档列表，那么**如何将最符合用户查询需求的文档放到前列呢？**
+
+  - 本质是一个排序问题，排序的依据是相关性算分
+
+    ​								倒排索引
+
+| 单词   | 文档ID列表 |
+| ------ | ---------- |
+| alfred | 1,2        |
+| way    | 1          |
+
+- 可以通过`explain`参数来查看具体的计算方法，但要注意：
+
+  - es的算分是按照shard进行的，即shard的分数计算是相互独立的，所以在使用`explain`的时候注意分片数
+
+  ```
+  GET test_search_index/_search
+  {
+      "explain": true,
+      "query": {
+          "match": {
+              "username": "alfred way"
+          }
+      }
+  }
+  ```
+
+  - 可以通过设置索引的分片数为1来避免这个问题
+
+  ```
+  PUT test_search_index
+  {
+      "settings": {
+          "index": {
+              "number_of_shards": "1"
           }
       }
   }
