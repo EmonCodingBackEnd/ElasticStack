@@ -921,7 +921,81 @@ GET my_index/_search
 }
 ```
 
+### index_options
 
+- 用于控制倒排索引记录的内容，有如下4种配置
+  - `docs` 只记录doc id
+  - `freqs` 记录doc id和term frequencies
+  - `positions` 记录doc id、term frequencies和term position
+  - `offsets` 记录doc id、term frequencies、term position和character offsets
+- text类型默认配置为positions，其他默认为docs
+- 记录内容越多，占用空间越大
+
+```
+# 创建索引
+PUT my_index
+{
+    "mappings": {
+        "doc": {
+            "properties": {
+                "cookie": {
+                    "type": "text",
+                    "index_options": "offsets"
+                }
+            }
+        }
+    }
+}
+```
+
+### null_value
+
+- 当字段遇到null值时的处理策略，默认为null，即空值，此时es会忽略该值。可以通过设定该值设定字段的默认值
+
+```
+# 创建索引
+PUT my_index
+{
+    "mappings": {
+        "my_type": {
+            "properties": {
+                "status_code": {
+                    "type": "keyword",
+                    "null_value": "NULL"
+                }
+            }
+        }
+    }
+}
+```
+
+### 核心数据类型
+
+- 字符串型 text、keyword
+- 数值型 long、integer、short、byte、double、float、half_float、scaled_float
+- 日期类型 date
+- 布尔类型 boolean
+- 二进制类型 binary
+- 范围类型 integer_range、float_range、long_range、double_range、date_range
+- 复杂数据类型
+  - 数组类型 array
+  - 对象类型 object 
+  - 嵌套类型 nested object
+- 地理位置数据类型
+  - geo_point
+  - geo_shape
+- 专用类型
+  - 记录IP地址 `ip`
+  - 实现自动补全 `completion`
+  - 记录分词数 `token_count`
+  - 记录字符串hash值 `murmur3`
+  - percolator
+  - join
+
+### 多字段特性
+
+- 多字段特性 multi-fields
+  - 允许对同一个字段采用不同的配置，比如分词，常见例子如对人名实现拼音搜索，只需要在人名中新增一个子字段为pinyin即可。
 
 
 
