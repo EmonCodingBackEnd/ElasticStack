@@ -1293,20 +1293,6 @@ GET /my_*/_search
   }
   ```
 
-## 2、URI Search
-
-- 通过 url query 参数来实现搜索，常用参数如下：
-  - `q` 指定查询的语句，语法为Query String Syntax
-  - `df` q中不指定字段时默认查询的字段，如果不指定，es会查询所有字段
-  - `sort` 排序
-  - `timeout` 指定超时时间，默认不超时
-  - `from,size` 用于分页
-
-```
-# 查询user字段包含alfred的文档，结果按照age升序排列，返回第5-14个文档，如果超过1s没有结束，则以超时结束。
-GET /my_index/_search?q=alfred&df=user&sort=age:asc&from=4&size=10&timeout=1s
-```
-
 - 数据准备
 
 ```
@@ -1361,6 +1347,20 @@ POST test_search_index/doc/_bulk
 }
 ```
 
+## 2、URI Search
+
+- 通过 url query 参数来实现搜索，常用参数如下：
+  - `q` 指定查询的语句，语法为Query String Syntax
+  - `df` q中不指定字段时默认查询的字段，如果不指定，es会查询所有字段
+  - `sort` 排序
+  - `timeout` 指定超时时间，默认不超时
+  - `from,size` 用于分页
+
+```
+# 查询user字段包含alfred的文档，结果按照age升序排列，返回第5-14个文档，如果超过1s没有结束，则以超时结束。
+GET /my_index/_search?q=alfred&df=user&sort=age:asc&from=4&size=10&timeout=1s
+```
+
 ### Query String Syntax
 
 - term 与 phrase（单次term与词语查询）
@@ -1375,7 +1375,11 @@ POST test_search_index/doc/_bulk
   - status:(active OR pending) title:(full text search)
 
 ```
+# 如果想看执行细节，可以添加profile配置
 GET test_search_index/_search?q=alfred
+{
+  "profile": "true"
+}
 GET test_search_index/_search?q=username:alfred
 GET test_search_index/_search?q=username:alfred way
 GET test_search_index/_search?q=username:"alfred way"
@@ -1409,8 +1413,82 @@ GET test_search_index/_search?q=username:(alfred %2Bway)
     - age:(>=1 && <=10) 或者age:(+>=1 +<=10)
 
 ```
+GET test_search_index/_search?q=username:alfred age:>20
+GET test_search_index/_search?q=birth:(>1980 AND <1990)
+```
+
+- 通配符查询
+  - `?` 代表1个字符，*代表0或多个字符
+    - name:t?m
+    - name:tom*
+    - name:t*m
+  - 通配符匹配执行效率低，且占用较多内存，不建议使用
+  - 如无特殊需求，不要将?/*放在最前面
 
 ```
+GET test_search_index/_search?q=username:alf*
+```
+
+- 正则表达式匹配
+  - name:/[mb]oat/
+
+```
+GET test_search_index/_search?q=username:/[a]?l.*/
+```
+
+- 模糊匹配 fuzzy query
+  - name:roam~1
+  - 匹配与roam相差一个character的词，比如form roams等
+- 近似度查询 proximity search
+  - "fox quick"~5
+  - 以term为单位进行差异比较，比如"quick fox","quick brown fox"都会被匹配
+
+```
+GET test_search_index/_search?q=username:alfed~1
+GET test_search_index/_search?q=username:alfd~2
+GET test_search_index/_search?q=job:"java engineer"~1
+```
+
+## 3、Request Body Search
+
+- 将查询语句通过http request body发送到es，主要包含如下参数
+  - `query` 符合Query DSL语法的查询语句
+  - `from`,`size`
+  - `timeout`
+  - `sort`
+  - ...
+- 基于JSON定义的查询语言，主要包含如下两种类型：
+  - 字段类查询
+    - 如`term`,`match`,`range`等，只针对某一个字段进行查询
+  - 复合查询
+    - 如bool查询等，包含一个或多个字段类查询或者复合查询语句
+
+### 字段类查询
+
+- 字段类查询主要包括以下两类：
+
+  - 全文匹配
+    - 针对text类型的字段进行全文检索，会对查询语句进行分词处理，如match，match_phrase等query类型
+  - 单词匹配
+    - 不会对查询语句做分词处理，直接去匹配字段的倒排索引，如term，terms，range等query类型
+
+- Match Query
+
+  - 对字段作全文检索，最基本和常用的查询类型，API示例如下：
+
+  ```
+  # 如果想看执行细节，可以添加profile配置
+  GET test_search_index/_search
+  {
+  	"profile": "true",
+      "query": {
+          "match": {
+              "username": "alfred way"
+          }
+      }
+  }
+  ```
+
 
 # 五、分布式特性介绍
 
