@@ -774,7 +774,10 @@ POST test_index2/_analyze
 查询Mapping：
 
 ```
+# 查询mappings
 GET /test_index/_mapping
+# 查询settings
+GET /test_index
 ```
 
 ## 2、自定义Mapping
@@ -995,7 +998,269 @@ PUT my_index
 ### 多字段特性
 
 - 多字段特性 multi-fields
+
   - 允许对同一个字段采用不同的配置，比如分词，常见例子如对人名实现拼音搜索，只需要在人名中新增一个子字段为pinyin即可。
+
+  ```
+  {
+      "test_index": {
+          "mappings": {
+          	"doc": {
+                  "properties": {
+                      "username": {
+                          "type": "text",
+                          "fields": {
+                              "pinyin": {
+                                  "type": "text",
+                                  "analyzer": "pinyin"
+                              }
+                          }
+                      }
+                  }
+          	}
+          }
+      }
+  }
+  ```
+
+  ```
+  GET test_index/_search
+  {
+      "query": {
+      	"match": {
+              "username.pinyin": "hanhan"
+      	}
+      }
+  }
+  ```
+
+### Dynamic Mapping
+
+- es可以自动识别文档字段类型，从而降低用户使用成本，如下所示：
+
+```
+PUT /test_index/doc/1
+{
+    "username": "alfred",
+    "age": 1
+}
+```
+
+```
+GET /test_index/_mapping
+```
+
+- es是依靠JSON文档的字段类似来实现自动识别字段类型，支持的类型如下：
+
+| JSON类型 | es类型                                                       |
+| -------- | ------------------------------------------------------------ |
+| null     | 忽略                                                         |
+| boolean  | boolean                                                      |
+| 浮点类型 | float                                                        |
+| 整数     | long                                                         |
+| object   | object                                                       |
+| array    | 由第一个非null值类型决定                                     |
+| string   | 匹配为日期则设为date类型（默认开启）<br />匹配为数字的话设为float或long类型（默认关闭）<br />设为text类型，并附带keyword的子字段 |
+
+```
+PUT /test_index/doc/1
+{
+    "username": "alfred",
+    "age": 14,
+    "birth": "1988-10-10",
+    "married": false,
+    "year": "18",
+    "tags": ["boy", "fashion"],
+    "money": 100.1
+}
+```
+
+```
+GET /test_index/_mapping
+```
+
+- 日期的自动识别可以自行配置日期格式，以满足各种需求
+
+  - 默认是`["strict_date_optional_time", "yyyy/MM/dd HH:mm:ss Z||yyyy/MM/dd Z"]`
+  - strict_date_optional_time是ISO datetime格式，完整格式类似下面：
+    - YYYY-MM-DDThh:mm:ssTZD(eg 1997-07-16T19:20:30+01:00)
+  - dynamic_date_formats可以自定义日期类型
+  - date_detection可以关闭日期自动识别的机制
+
+- 字符串是数字时，默认不会自动识别为整形，因为字符串中出现数字是完全合理的
+
+  - numeric_detection可以开启字符串中数字的自动识别，如下所示：
+
+  ```
+  PUT my_index
+  {
+      "mappings": {
+          "my_type": {
+              "numeric_detection": true
+          }
+      }
+  }
+  ```
+
+### Dynamic Templates
+
+- 允许根据es自动识别的数据类型、字段名等来动态设定字段类型，可以实现如下效果：
+  - 所有字符串类型都设置为keywork类型，即默认不分词
+  - 所有以message开头的字段都设置为text类型，即分词
+  - 所有以long_开头的字段都设定为long类型
+  - 所有自动匹配为double类型的都设定为float类型，以节省空间
+
+- 匹配规则一般有如下几个参数：
+  - match_mapping_type 匹配es自动识别的字段类型，如boolean、long、string等
+  - match,unmatch 匹配字段名
+  - path_match,patch_unmatch 匹配路径
+
+```
+# 创建索引
+PUT test_index
+{
+    "mappings": {
+        "doc": {
+            "dynamic_templates": [
+                {
+                    "message_as_text": {
+                        "match_mapping_type": "string",
+                        "match": "message*",
+                        "mapping": {
+                            "type": "text"
+                        }
+                    }
+                },
+                {
+                    "strings_as_keywords": {
+                        "match_mapping_type": "string",
+                        "mapping": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                {
+                    "double_as_float": {
+                        "match_mapping_type": "double",
+                        "mapping": {
+                            "type": "float"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+```
+# 创建文档
+PUT test_index/doc/1
+{
+    "name": "alfred",
+    "message": "handsome boy"
+}
+```
+
+### 自定义Maping的建议
+
+自定义Mapping的操作步骤如下：
+
+1. 写入一条文档到es的临时索引中，获取es自动生成的mapping
+
+```
+# 示例
+PUT test_index/doc/1
+{
+    "referrer": "-",
+    "response_code": "200",
+    "remote_ip": "171.221.139.157",
+    "method": "POST",
+    "user_name": "-",
+    "http_version": "1.1",
+    "body_sent": {
+        "bytes": "0"
+    },
+    "url": "/analyzeVideo"
+}
+```
+
+2. 修改步骤1得到的mapping，自定义相关配置
+
+```
+# 获取并修改
+GET /test_index/_mapping
+```
+
+3. 使用步骤2的mapping创建实际所需索引
+
+### 索引模板
+
+- 索引模板，英文为Index Template，主要用于在创建索引时自动应用预先设定的配置，简化索引创建的操作步骤
+  - 可以设定索引的配置和mapping
+  - 可以有多个模板，根据order设置，order大的覆盖小的配置
+- 索引模板API，endpoint为`_template`，如下所示：
+
+```
+# 模板1
+PUT _template/test_template
+{
+    "index_patterns": ["te*", "bar*"],
+    "order": 0,
+    "settings": {
+        "number_of_shards": 1
+    },
+    "mappings": {
+        "doc": {
+			"_source": {
+                "enabled": false
+			},
+			"properties": {
+                "name": {
+                    "type": "keyword"
+                }
+			}
+        }
+    }
+}
+
+# 模板2
+PUT _template/test_template2
+{
+	"index_patterns": ["test*"],
+	"order": 1,
+	"settings": {
+        "number_of_shards": 1
+	},
+	"mappings": {
+        "doc": {
+            "_source": {
+                "enabled": true
+            }
+        }
+	}
+}
+```
+
+```
+# 创建索引并查看配置
+PUT test_index
+GET test_index
+```
+
+- 获取与删除索引模板
+
+```
+GET _template
+GET _template/test_template
+DELETE _template/test_template
+```
+
+
+
+
+
+
 
 
 
