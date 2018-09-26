@@ -777,6 +777,8 @@ POST test_index2/_analyze
 # 查询mappings
 GET /test_index/_mapping
 # 查询settings
+GET /test_index/_settings
+# 查询索引
 GET /test_index
 ```
 
@@ -1256,19 +1258,159 @@ GET _template/test_template
 DELETE _template/test_template
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
 # 四、Search API介绍
+
+## 1、Search API
+
+- 实现对es中存储的数据进行查询分析，endpoint为`_search`，如下所示：
+
+```
+GET /_search
+GET /my_index/_search
+GET /my_index1,my_index2/_search
+GET /my_*/_search
+```
+
+- 查询主要有两种形式
+
+  - URI Search
+    - 操作简便，方便通过命令行测试
+    - 仅包含部分查询语法
+
+  ```
+  GET /my_index/_search?q=user:alfred
+  ```
+
+  - Request Body Search
+    - es提供的完备查询语法Query DSL（Domain Specific Language）
+
+  ```
+  GET /my_index/_search
+  {
+      "query": {
+          "term": {"user": "alfred"}
+      }
+  }
+  ```
+
+## 2、URI Search
+
+- 通过 url query 参数来实现搜索，常用参数如下：
+  - `q` 指定查询的语句，语法为Query String Syntax
+  - `df` q中不指定字段时默认查询的字段，如果不指定，es会查询所有字段
+  - `sort` 排序
+  - `timeout` 指定超时时间，默认不超时
+  - `from,size` 用于分页
+
+```
+# 查询user字段包含alfred的文档，结果按照age升序排列，返回第5-14个文档，如果超过1s没有结束，则以超时结束。
+GET /my_index/_search?q=alfred&df=user&sort=age:asc&from=4&size=10&timeout=1s
+```
+
+- 数据准备
+
+```
+POST test_search_index/doc/_bulk
+{
+    "index": {
+        "_id": "1"
+    }
+}
+{
+    "username": "alfred way",
+    "job": "java engineer",
+    "age": 18,
+    "birth": "1990-01-02",
+    "isMarried": false
+}
+{
+    "index": {
+        "_id": "2"
+    }
+}
+{
+    "username": "alfred",
+    "job": "java senior engineer and java specialist",
+    "age": 28,
+    "birth": "1980-05-07",
+    "isMarried": true
+}
+{
+    "index": {
+        "_id": "3"
+    }
+}
+{
+    "username": "lee",
+    "job": "java and ruby engineer",
+    "age": 22,
+    "birth": "1985-08-07",
+    "isMarried": false
+}
+{
+    "index": {
+        "_id": "4"
+    }
+}
+{
+    "username": "alfred junior way",
+    "job": "ruby engineer",
+    "age": 23,
+    "birth": "1980-08-07",
+    "isMarried": false
+}
+```
+
+### Query String Syntax
+
+- term 与 phrase（单次term与词语查询）
+  - `alfred way`等效于alfred OR way
+  - `"alfred way"` 词语查询，要求先后顺序
+- 泛查询
+  - `alfred` 等效于在所有字段去匹配该term
+- 指定字段
+  - `name:alfred`
+- Group分组设定，使用括号指定匹配的规则
+  - (quick OR brown) AND fox
+  - status:(active OR pending) title:(full text search)
+
+```
+GET test_search_index/_search?q=alfred
+GET test_search_index/_search?q=username:alfred
+GET test_search_index/_search?q=username:alfred way
+GET test_search_index/_search?q=username:"alfred way"
+GET test_search_index/_search?q=username:(alfred way)
+```
+
+- 布尔操作符
+  - AND(&&), OR(||), NOT(!)
+    - name:(tom NOT lee)
+    - 注意大写，不能小写
+  - `+`和`-`分别对应must和must_not，且`+`或`-`要与后面内容紧贴着
+    - name:(tom `+`lee `-`alfred)
+    - name:((lee && !alfred) || (tom && lee && !alfred))
+    - `+`在url中会被解析为空格，要使用encode后的结果才可以，为`%2B`
+
+```
+GET test_search_index/_search?q=username:alfred AND way
+GET test_search_index/_search?q=username:(alfred AND way)
+GET test_search_index/_search?q=username:(alfred NOT way)
+GET test_search_index/_search?q=username:(alfred %2Bway)
+```
+
+- 范围查询，支持数值和日期
+  - 区间写法，闭区间用[]，开区间用{}
+    - age:[1 TO 10] 意为 1 <= age <= 10
+    - age:[1 TO 10} 意为 1<= age < 10
+    - age:[1 TO] 意为 age >= 1
+    - age:[* TO 10] 意为 age <= 10
+  - 算数符号写法
+    - age:>=1
+    - age:(>=1 && <=10) 或者age:(+>=1 +<=10)
+
+```
+
+```
 
 # 五、分布式特性介绍
 
