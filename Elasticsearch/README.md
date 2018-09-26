@@ -835,6 +835,98 @@ PUT my_index
 }
 ```
 
+### copy_to
+
+- 将该字段的值复制到目标字段，实现类似`_all`的作用
+- 不会出现在`_source`中，只用来搜索
+
+```
+# 创建索引
+PUT my_index
+{
+    "mappings": {
+        "doc": {
+            "properties": {
+                "first_name": {
+                    "type": "text",
+                    "copy_to": "full_name"
+                },
+                "last_name": {
+                    "type": "text",
+                    "copy_to": "full_name"
+                },
+                "full_name": {
+                    "type": "text"
+                }
+            }
+        }
+    }
+}
+```
+
+```
+# 创建文档
+PUT my_index/doc/1
+{
+    "first_name": "John",
+    "last_name": "Smith"
+}
+```
+
+```
+# 查询文档
+GET my_index/_search
+{
+    "query": {
+        "match": {
+            "full_name": {
+                "query": "John Smith",
+                "operator": "and"
+            }
+        }
+    }
+}
+```
+
+###  index
+
+- 控制当前字段是否索引，默认为true，即记录索引，false不记录，即不可搜索
+
+```
+# 创建索引
+PUT my_index
+{
+    "mappings": {
+        "doc": {
+            "properties": {
+                "cookie": {
+					"type": "text",
+					"index": false
+                }
+            }
+        }
+    }
+}
+```
+
+```
+# 查询文档
+GET my_index/_search
+{
+    "query": {
+        "match": {
+        	"cookie": "name"
+        }
+    }
+}
+```
+
+
+
+
+
+
+
 
 
 # 四、Search API介绍
