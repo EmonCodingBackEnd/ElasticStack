@@ -1489,6 +1489,40 @@ GET test_search_index/_search?q=job:"java engineer"~1
   }
   ```
 
+  - 通过`operator`参数可以控制单词间的匹配关系，可选项为`or`和`and`
+
+  ```
+  GET test_search_index/_search
+  {
+  	"profile": "true",
+      "query": {
+          "match": {
+              "username": {
+                  "query": "alfred way",
+                  "operator": "and"
+              }
+          }
+      }
+  }
+  ```
+
+  - 通过`minimum_should_match`参数可以控制需要匹配的单词数
+
+  ```
+  GET test_search_index/_search
+  {
+  	"profile": "true",
+      "query": {
+          "match": {
+              "username": {
+                  "query": "alfred way",
+                  "minimum_should_match": "2"
+              }
+          }
+      }
+  }
+  ```
+
 
 # 五、分布式特性介绍
 
