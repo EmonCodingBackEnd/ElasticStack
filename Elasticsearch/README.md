@@ -1883,13 +1883,6 @@ GET test_search_index/_search
     | Filter     | 查找与查询语句相匹配的文档                                   | bool中农的filter与must_not<br />constant_score中的filter |
 
 
-
-
-
-
-
-
-
 ### 相关性算分
 
 - 相关性算分是指文档与查询语句间的相关度，英文为relevance
@@ -1934,8 +1927,149 @@ GET test_search_index/_search
   }
   ```
 
+### Count API
+
+- 获取符合条件的文档数，endpoint为`_count`
+
+```
+GET test_search_index/_count
+{
+    "query": {
+    	"match": {
+            "username": "alfred"
+    	}
+    }
+}
+```
+
+### Source Filtering
+
+- 过滤返回结果中`_source`中的字段，主要有如下几种方式：
+
+  - url参数
+
+  ```
+  GET test_search_index/_search?_source=username
+  ```
+
+  -  不返回`_source`
+
+  ```
+  GET test_search_index/_search
+  {
+      "_source": false
+  }
+  ```
+
+  - 返回部分字段之一
+
+  ```
+  GET test_search_index/_search
+  {
+      "_source": {
+      	"includes": "*i*",
+      	"excludes": "birth"
+      }
+  }
+  ```
+
+  - 返回部分字段之二
+
+  ```
+  GET test_search_index/_search
+  {
+      "_source": ["username", "age"]
+  }
+  ```
+
 
 # 五、分布式特性介绍
+
+- es支持集群模式，是一个分布式系统，期好处主要有两个：
+  - 增大系统容量，如内存、磁盘、使得es集群可以支持PB级的数据
+  - 提高系统可用性，即时部分节点停止服务，整个集群依然可以正常服务
+- es集群由多个es实例组成
+  - 不同集群通过集群名字来区分，可以通过cluster.name进行修改，默认为elasticsearch
+  - 每个es实例本质上是一个JVM进程，且有自己的名字，通过node.name进行修改
+
+## 1、Master Node
+
+- 可以修改cluster state的节点称为master节点，一个集群只能有一个
+- cluster state存储在每个节点上，master维护最新版本并同步给其他节点
+- master节点是通过集群中所有节点选举产生的，可以被选举的节点称为master-eligible节点，相关配置如下：
+  - `node.master:true`
+
+## 2、Coordinating Node
+
+- 处理请求的节点即为coordinating节点，该节点为所有节点的默认角色，不能取消
+  - 路由请求到正确的节点处理，比如创建索引的请求到master节点
+
+## 3、Data Node
+
+- 存储数据的节点即为data节点，默认节点都是data类型，相关配置如下：
+  - `node.data:true`
+
+## 4、提高系统可用性
+
+- 服务可用性
+  - 2个节点的情况下，允许其中一个节点停止服务
+- 数据可用性
+  - 引入副本（Replication）解决
+  - 每个节点上都有完备的数据
+
+## 5、增大系统容量
+
+- 如何将数据分布于所有节点上？
+  - 引入分片（Shard）解决问题
+- 分片是es支持PB级数据的基石
+  - 分片存储了部分数据，可以分布于任意节点上
+  - 分片数在索引创建时指定且后续不允许再更改，默认5个
+  - 分片有主分片和副本分片之分，以实现数据的高可用
+  - 副本分片的数据由主分片同步，可以有多个，从而提高读取的吞吐量
+- 3个分片和1个副本的示例：
+
+```
+PUT test_index
+{
+    "settings": {
+        "number_of_shards": 3,
+        "number_of"replicas": 1
+    }
+}
+```
+
+- 基于3个分片1个备份，如果已经有3个节点的情况下进行分析
+  - 此时增加节点是否能提高test_index的数据容量？
+    - 不能。因为只有3个分片，已经分布在3台节点上，新增的节点无法利用。
+  - 此时增加副本数是否能提高test_index的读取吞吐量？
+    - 不能。因为新增的副本也是分布在这3个节点上，还是利用了同样的资源。如果要增加吞吐量，还需要新增节点。
+  - 结论：分片数的设定很重要，需要提前规划好
+    - 过小会导致后续无法通过增加节点实现水平扩容
+    - 过大会导致一个节点上分布过多分片，造成资源浪费，同时会影响查询性能
+
+## 6、集群状态 Cluster Health
+
+- 通过如下api可以查看集群健康状况，包括以下三种：
+  - green 健康状态，指所有主副分片都正常分配
+  - yellow 指所有主分片都正常分配，但是有副本分片未正常分配
+  - red 有主分片未分配
+
+```
+GET _cluster/health
+```
+
+## 7、故障转移
+
+- 集群由3个节点组成，如下所示，此时集群状态是green
+
+- node1所在机器宕机导致服务终止，此时集群会如何处理？
+
+  - node2和node3发现node1无法响应一段时间后会发起master选举，比如这里选择node2为master节点。此时由于主分片P0下线，集群状态变为Red。
+
+  ![第一步](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124011.png)
+
+  - node2发现主分片P0未分配，将R0提升为主分片。此时由于所有主分片都正常分配，集群状态变为Yellow。
+  - node2为P0和P1生成新的副本，集群状态变为绿色。
 
 # 六、深入了解Search的运行机制
 
