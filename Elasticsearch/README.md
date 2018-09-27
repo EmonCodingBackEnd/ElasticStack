@@ -2076,6 +2076,64 @@ GET _cluster/health
 
   ![第三步](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124109.png)
 
+## 8、文档分布式存储
+
+- 文档最终会存储在分片上，如下图所示：
+
+  - Document1最终存储在分片P1上
+
+  ![存储在P1分片上](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927132700.png)
+
+- Document1是如何存储到分片P1的？选择P1的依据是什么？
+
+  - 需要文档到分片的映射算法
+
+- 目的
+
+  - 使得文档均匀分布在所有分片上，以充分利用资源
+
+- 算法
+
+  - 随机选择或者round-robin算法？
+    - 不可取，因为需要维护文档到分片的映射关系，成本巨大
+  - 根据文档值实时计算对应的分片
+
+### 文档到分片的映射算法
+
+- es通过如下的公式计算文档对应的分片
+  - shard = hash(routing)%number_of_primary_shards
+    - hash算法保证可以将数据均匀分散在分片中
+    - routing是一个关键参数，默认是文档的id，也可以自行制定
+    - number_of_primary_shards是主分片数
+  - 该算法与主分片数相关，这也是**分片数一旦确定后便不能更改**的原因
+
+### 文档创建的流程
+
+1. Client向node3发起创建文档的请求
+
+2. node3通过routing计算该文档应该存储在Shard1上，查询cluster state后确认主分片P1在node2上，然后转发创建文档的请求到node2
+
+3. P1接收并执行创建文档请求后，将同样的请求发送到副本分片R1
+
+4. R1接收并执行创建文档请求后，通知P1成功的结果
+
+5. P1接收副本分片结果后，通知node3创建成功
+
+6. node3返回结果到Client
+
+![文档创建流程](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927134612.png)
+
+### 文档读取的流程
+
+1. Client向node3发起获取文档1的请求
+2. node3通过routing计算该文档在Shard1上，查询cluster state后获取Shard1的主副分片列表，然后以轮询的机制获取一个shard，比如这里是R1，然后转发读取文档的请求到node1
+3. R1接收并执行读取文档请求后，将结果返回node3
+4. node4返回结果给Client
+
+![文档读取的流程](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927135207.png)
+
+
+
 # 六、深入了解Search的运行机制
 
 # 七、聚合分析入门
