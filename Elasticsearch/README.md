@@ -2066,10 +2066,15 @@ GET _cluster/health
 
   - node2和node3发现node1无法响应一段时间后会发起master选举，比如这里选择node2为master节点。此时由于主分片P0下线，集群状态变为Red。
 
-  ![第一步](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124011.png)
+  ![第一步](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124418.png)
 
   - node2发现主分片P0未分配，将R0提升为主分片。此时由于所有主分片都正常分配，集群状态变为Yellow。
+
+  ![第二部](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124101.png)
+
   - node2为P0和P1生成新的副本，集群状态变为绿色。
+
+  ![第三步](https://github.com/EmonCodingBackEnd/ElasticStack/blob/master/Elasticsearch/src/main/resources/images/20180927124109.png)
 
 # 六、深入了解Search的运行机制
 
