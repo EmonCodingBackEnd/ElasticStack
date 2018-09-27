@@ -1727,6 +1727,168 @@ GET test_search_index/_search
   }
   ```
 
+- Bool Query
+
+  - 布尔查询由一个或多个布尔子句组成，主要包含如下4个：
+
+  | 关键字   | 描述                                           |
+  | -------- | ---------------------------------------------- |
+  | filter   | 只过滤符合条件的文档，不计算相关性得分         |
+  | must     | 文档必须符合must中的所有条件，会影响相关性得分 |
+  | must_not | 文档必须不符合must_not中所有的条件             |
+  | should   | 文档可以符合should中的条件，会影响相关性得分   |
+
+  - Bool查询的API如下所示：
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "bool": {
+              "must": [
+                  {}
+              ],
+              "must_not": [
+                  {}
+              ],
+              "should": [
+                  {}
+              ],
+              "filter": [
+              	{}
+              ]
+          }
+      }
+  }
+  ```
+
+  - Filter 查询只过滤符合条件的文档，不会进行相关性算分
+    - es 针对filter会有智能缓存，因此其执行效率很高
+    - 做简单匹配查询且不考虑算分时，推荐使用filter替代query等
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "bool": {
+              "filter": [
+                  {
+                      "term": {
+                          "username": "alfred"
+                      }
+                  }
+              ]
+          }
+      }
+  }
+  ```
+
+  - Must
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "bool": {
+          	"must": [
+                  {
+                      "match": {
+                      	"username": "alfred"
+                  	}
+                  },
+                  {
+                      "match": {
+                          "job": "specialist"
+                      }
+                  }
+          	]
+          }
+      }
+  }
+  ```
+
+  - Must_Not
+
+  ```
+  GET test_search_index/_search
+  {
+      "query": {
+          "bool": {
+          	"must": [
+                  {
+                      "match": {
+                      	"job": "java"
+                  	}
+                  }
+          	],
+          	"must_not": [
+                  {
+                      "match": {
+                          "job": "ruby"
+                      }
+                  }
+          	]
+          }
+      }
+  }
+  ```
+
+  - Should
+
+    - 只包含should时，文档必须满足至少一个条件
+      - `minimum_should_match`可以控制满足条件的个数或者百分比
+
+    ```
+    GET test_search_index/_search
+    {
+        "query": {
+            "bool": {
+                "should": [
+                    {"term": {"job": "java"}},
+                    {"term": {"job": "ruby"}},
+                    {"term": {"job": "specialist"}}
+                ],
+                "minimum_should_match": 2
+            }
+        }
+    }
+    ```
+
+    - 同时包含should和must时，文档不必满足should中的条件，但是如果满足条件，会增加相关性得分
+
+    ```
+    # 查询username包含alfred的文档，同时将job包含ruby的文档排在前面
+    GET test_search_index/_search
+    {
+        "query": {
+            "bool": {
+                "must": [
+                	{"term": {"username": "alfred"}}
+                ],
+                "should": [
+                    {"term": {"job": "ruby"}}
+                ]
+            }
+        }
+    }
+    ```
+
+  - Query Context VS Filter Context
+
+    - 当一个查询语句位于Query或者Filter上下文时，es执行的结果会不同，对比如下：
+
+    | 上下文类型 | 执行类型                                                     | 使用方式                                                 |
+    | ---------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+    | Query      | 查找与查询语句最匹配的文档，<br />对所有文档进行相关性算分并排序 | query<br />bool中的must和should                          |
+    | Filter     | 查找与查询语句相匹配的文档                                   | bool中农的filter与must_not<br />constant_score中的filter |
+
+
+
+
+
+
+
+
 
 ### 相关性算分
 
